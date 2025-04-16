@@ -194,7 +194,6 @@ public class PlayerList : NetworkBehaviour
                 playerNames[playerId % playerNames.Count]
             ));
         }
-
         Debug.Log($"Added local player {playerId} to local player list");
     }
 

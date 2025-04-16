@@ -20,7 +20,6 @@ public class SnakeMovement : NetworkBehaviour
     public GameObject tail;
     public GameObject currentTail;
     public PlayerList playerList;
-
     private bool wallInvincible = false;
     private bool playerInvincible = false;
     private bool invertedControls = false;
@@ -43,6 +42,7 @@ public class SnakeMovement : NetworkBehaviour
     private void Awake()
     {
         parentNetworkObject = GetComponentInParent<NetworkObject>();
+        playerList = FindFirstObjectByType<PlayerList>();
     }
 
 
@@ -110,6 +110,7 @@ public class SnakeMovement : NetworkBehaviour
         playerId = id;
         spawnPoint = spawn;
         this.transform.position = spawnPoint;
+        Debug.Log(playerList.playerNames.Count);
         Color originalColor = playerList.playerColors[playerId];
         Color.RGBToHSV(originalColor, out float h, out float s, out float v);
         s *= 0.5f;
