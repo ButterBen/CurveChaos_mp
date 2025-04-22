@@ -84,7 +84,6 @@ public class SnakeMovement : NetworkBehaviour
                 currentTail = tailObj.gameObject;
                 Debug.Log($"Player {playerId} assigned currentTail: {currentTail.name}");
                 
-                // Make sure the tail knows about this head
                 Tail tailComponent = currentTail.GetComponent<Tail>();
                 if (tailComponent != null)
                 {
@@ -117,14 +116,8 @@ public class SnakeMovement : NetworkBehaviour
         Color desaturatedColor = Color.HSVToRGB(h, s, v);
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
         spriteRenderer.color = desaturatedColor;
-       // tail.gameObject.GetComponent<LineRenderer>().material = playerList.playerMaterials[playerId];
     }
 
-    public void ResetTailAndSpawn()
-    {
-        ResetPositionOnly();
-        CreateNewTailOnly();
-    }
     public void ResetPositionOnly()
     {
         spawnPoint = new Vector3(Random.Range(-4f, 4f), Random.Range(-4f, 4f), 0f);
@@ -449,20 +442,21 @@ public class SnakeMovement : NetworkBehaviour
             else
             {
                 currentTail.GetComponent<Tail>().CreateGap();
+                nextGapAt = GenerateNextGapStartTime();
                 Vector3 currentPosition = this.transform.position;
                 switch (col2D.name)
                 {
                     case "WallTop":
-                        currentPosition.y = -4.862926f;
+                        currentPosition.y = currentPosition.y - 9.5f;
                         break;
                     case "WallBottom":
-                        currentPosition.y = 4.87089f;
+                        currentPosition.y = currentPosition.y + 9.5f;
                         break;
                     case "WallLeft":
-                        currentPosition.x = 4.853698f;
+                        currentPosition.x = currentPosition.x + 9.5f;
                         break;
                     case "WallRight":
-                        currentPosition.x = -4.856332f;
+                        currentPosition.x = currentPosition.x - 9.5f;
                         break;
                 }
                 this.transform.position = currentPosition;
@@ -592,23 +586,27 @@ public class SnakeMovement : NetworkBehaviour
     public void DoubleSizePowerUp()
     {
         currentTail.GetComponent<Tail>().CreateGap();
+        nextGapAt = GenerateNextGapStartTime();
         StartCoroutine(waitForGapChangeSize(2f, 2f, 2f));
         Invoke("ResetSizePowerUpDouble", 5f);
     }
     public void HalfSizePowerUp()
     {
         currentTail.GetComponent<Tail>().CreateGap();
+        nextGapAt = GenerateNextGapStartTime();
         StartCoroutine(waitForGapChangeSize(0.5f, 0.5f, 1f));
         Invoke("ResetSizePowerUpHalf", 5f);
     }
     void ResetSizePowerUpDouble()
     {
         currentTail.GetComponent<Tail>().CreateGap();
+        nextGapAt = GenerateNextGapStartTime();
         StartCoroutine(waitForGapChangeSize(0.5f, .5f, 0.5f));
     }
     void ResetSizePowerUpHalf()
     {
         currentTail.GetComponent<Tail>().CreateGap();
+        nextGapAt = GenerateNextGapStartTime();
         StartCoroutine(waitForGapChangeSize(2f, 2f,1f));
     }
     IEnumerator waitForGapChangeSize(float widthMultiplier, float scaleMultiplier, float pointSpacingMultiplier)

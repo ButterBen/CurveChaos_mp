@@ -522,7 +522,11 @@ public class GameManagerCombined : NetworkBehaviour
         
         // Clear local player points
         playerPoints.Clear();
-        networkPlayerPoints.Value = new Dictionary<int, int>();
+        if(IsServer)
+        {
+            networkPlayerPoints.Value = new Dictionary<int, int>();
+        }
+
     }
     
     #endregion
@@ -591,11 +595,8 @@ public class GameManagerCombined : NetworkBehaviour
     {
         int totalPlayers = playerList.players.Count;
         
-        // The player who just died gets points based on their death position
-        // First to die gets 0, second gets 1, etc.
-        int deathPosition = deathOrderList.Count - 1; // 0-based index of death
+        int deathPosition = deathOrderList.Count - 1; 
         
-        // Make sure we haven't already given this player points
         if (!hasReceivedPoints[deadPlayerId])
         {
             playerPoints[deadPlayerId] += deathPosition;
@@ -642,64 +643,6 @@ public class GameManagerCombined : NetworkBehaviour
         }
         return alive;
     }
-
-    // private void CalculatePoints()
-    // {
-    //     // Only calculate points if there have been deaths this round
-    //     if (deadPlayers.Count == 0) 
-    //         return;
-
-    //     List<PlayerData> alivePlayers = new List<PlayerData>();
-
-    //     foreach (PlayerData playerData in playerList.players)
-    //     {
-    //         if (!playerPoints.ContainsKey(playerData.ID))
-    //         {
-    //             playerPoints[playerData.ID] = 0; 
-    //         }
-
-    //         if (!deadPlayers.Contains(playerData.ID))
-    //         {
-    //             alivePlayers.Add(playerData);
-    //         }
-    //     }
-
-    //     Dictionary<int, int> roundPoints = new Dictionary<int, int>();
-    //     int totalPlayers = playerList.players.Count;
-
-    //     // Award points based on actual order of death (first to die gets 0, second gets 1, etc.)
-    //     for (int i = 0; i < deathOrderList.Count; i++)
-    //     {
-    //         int playerId = deathOrderList[i];
-    //         roundPoints[playerId] = i;
-    //     }
-        
-    //     // Last survivor gets maximum points
-    //     if (alivePlayers.Count == 1)
-    //     {
-    //         int lastSurvivorId = alivePlayers[0].ID;
-    //         roundPoints[lastSurvivorId] = totalPlayers - 1; 
-    //     }
-        
-    //     Dictionary<int, int> updatedNetworkPoints = new Dictionary<int, int>();
-        
-    //     foreach (var pair in playerPoints)
-    //     {
-    //         updatedNetworkPoints[pair.Key] = pair.Value;
-    //     }
-        
-    //     // Add round points to total points
-    //     foreach (var player in roundPoints)
-    //     {
-    //         int playerId = player.Key;
-    //         int points = player.Value;
-            
-    //         playerPoints[playerId] += points;
-    //         updatedNetworkPoints[playerId] = playerPoints[playerId];
-    //     }
-        
-    //     networkPlayerPoints.Value = updatedNetworkPoints;
-    // }
     
     [ClientRpc]
     public void UpdatePlayerListClientRpc()
@@ -833,7 +776,7 @@ public class GameManagerCombined : NetworkBehaviour
         foreach (PlayerData playerData in playerList.players)
         {
             // Only create new tails here, positions are already set
-            playerData.gObject.GetComponentInChildren<SnakeMovement>().CreateNewTailOnly();
+           // playerData.gObject.GetComponentInChildren<SnakeMovement>().CreateNewTailOnly();
         }
     }
 

@@ -87,7 +87,6 @@ public class PowerUpManager : MonoBehaviour
                 case PowerUpType.HalfSize:
                     snakeMovement.HalfSizePowerUp();
                     break;
-
                 default:
                     UnityEngine.Debug.LogWarning("Unknown PowerUpType: " + powerUpType);
                     break;
