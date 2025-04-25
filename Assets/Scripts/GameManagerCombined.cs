@@ -179,9 +179,6 @@ public class GameManagerCombined : NetworkBehaviour
             }
         }
     }
-
-
-
     
     public override void OnNetworkSpawn()
     {
@@ -214,10 +211,8 @@ public class GameManagerCombined : NetworkBehaviour
     }
     private IEnumerator DelayedPlayerListSync()
     {
-        // Wait for player registration to complete
         yield return new WaitForSeconds(1f);
         
-        // Force synchronize player lists
         SynchronizePlayerListsServerRpc();
     }
     private void OnPlayerPointsChanged(Dictionary<int, int> previousValue, Dictionary<int, int> newValue)
@@ -225,13 +220,6 @@ public class GameManagerCombined : NetworkBehaviour
         RefreshPlayerListUI();
     }
 
-    // private IEnumerator DelayedUIRefresh()
-    // {
-    //     yield return new WaitForEndOfFrame();
-        
-    //     UpdatePlayerListClientRpc();
-    // }
-    
     public override void OnNetworkDespawn()
     {
         spawnPowerUp.OnValueChanged -= OnSpawnPowerUpChanged;
@@ -467,7 +455,7 @@ public class GameManagerCombined : NetworkBehaviour
     {
         if (IsServer)
         {
-            ForceDisconnectAllClientsClientRpc();
+          //  ForceDisconnectAllClientsClientRpc();
             
             StartCoroutine(DelayedServerShutdown());
         }
@@ -499,6 +487,7 @@ public class GameManagerCombined : NetworkBehaviour
         yield return new WaitForSeconds(0.5f);
         
         // Now shut down the server and reload the scene
+        
         NetworkManager.Singleton.Shutdown();
         SceneManager.LoadScene(this.gameObject.scene.name);
     }
@@ -512,6 +501,7 @@ public class GameManagerCombined : NetworkBehaviour
         lessRoundsButton.SetActive(true);
         roundsInputField.SetActive(true);
         roundsText.text = "Rounds:";
+        pauseText.SetActive(false);
         
         // Reset game state
         FreezePlayersClientRpc();
