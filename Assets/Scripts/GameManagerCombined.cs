@@ -24,10 +24,12 @@ public class GameManagerCombined : NetworkBehaviour
     public TMP_InputField roundsNumberText;
     public TMP_Text roundsText;
     public TMP_Text winnerText;
+    public TMP_Text endScoreText;
     public GameObject moreRoundsButton;
     public GameObject lessRoundsButton;
     public GameObject roundsInputField;
     public GameObject pauseText;
+    public GameObject gameEndPanel;
     
     [Header("PowerUps")]
     public GameObject doubleSpeedPrefab;
@@ -245,25 +247,33 @@ public class GameManagerCombined : NetworkBehaviour
     
     void Update()
     {
-        if(GameSceneObject.activeSelf)
+        if (GameSceneObject.activeSelf)
         {
-            if(Keyboard.current[Key.Escape].wasPressedThisFrame && Time.timeScale == 1f)
+            bool pausePressed = 
+                (Keyboard.current != null && Keyboard.current[Key.Escape].wasPressedThisFrame) ||
+                (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
+
+            if (pausePressed)
             {
-                PauseGameClientRpc();
-            }
-            else if (Keyboard.current[Key.Escape].wasPressedThisFrame && Time.timeScale == 0f)
-            {
-                if (IsServer)
+                if (Time.timeScale == 1f)
                 {
-                    StartCoroutine(waitForCountdown());
+                    PauseGameClientRpc();
                 }
-                else
+                else if (Time.timeScale == 0f)
                 {
-                    RequestUnpauseServerRpc();
+                    if (IsServer)
+                    {
+                        StartCoroutine(waitForCountdown());
+                    }
+                    else
+                    {
+                        RequestUnpauseServerRpc();
+                    }
                 }
             }
         }
     }
+
     
     #region Callback Methods
     
@@ -337,9 +347,27 @@ public class GameManagerCombined : NetworkBehaviour
         SyncCompletePlayerListClientRpc();
         DisplayPlayers(-1);
     }
+    public void NewGameButton()
+    {
+        ToggleGameEndPanelClientRPC();
+        ResetPointsServerRpc();
+        if (!IsServer)
+        {
+            Debug.Log("Only the host can start a new game");
+            return;
+        }
+        
+        networkRounds.Value = networkRounds.Value = int.Parse(roundsNumberText.text);
+        networkPlayerPoints.Value = new Dictionary<int, int>();
+        ResetPlayersPositionsClientRpc();
+        InitializeAlivePlayers();
+        
+        StartCoroutine(DelayThenNextRound());
+    }
     
     public void NextRoundButton()
     {
+        networkRounds.Value--;
         if (!IsServer)
         {
             Debug.Log("Only the host can advance rounds");
@@ -349,16 +377,61 @@ public class GameManagerCombined : NetworkBehaviour
         Debug.Log("Next Round Button Pressed. Rounds left: " + networkRounds.Value);
         if(networkRounds.Value <= 0)
         {
+            SetupNewRoundClientRpc();
+            ToggleGameEndPanelClientRPC();
             return;
         }
         
-        networkRounds.Value--;
         
         ResetPlayersPositionsClientRpc();
         InitializeAlivePlayers();
         
         StartCoroutine(DelayThenNextRound());
     }
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetPointsServerRpc()
+    {
+        foreach (PlayerData playerData in playerList.players)
+        {
+            if (playerPoints.ContainsKey(playerData.ID))
+            {
+                playerPoints[playerData.ID] = 0;
+            }
+        }
+        
+        networkPlayerPoints.Value = new Dictionary<int, int>(playerPoints);
+    }
+    [ClientRpc]
+    public void ToggleGameEndPanelClientRPC()
+    {
+        winnerText.gameObject.SetActive(false);
+        endScoreText.text = "";
+
+        List<PlayerData> sortedPlayers = new List<PlayerData>(playerList.players);
+        
+        sortedPlayers.Sort((a, b) =>
+        {
+            int pointsA = playerPoints.ContainsKey(a.ID) ? playerPoints[a.ID] : 0;
+            int pointsB = playerPoints.ContainsKey(b.ID) ? playerPoints[b.ID] : 0;
+            return pointsB.CompareTo(pointsA); 
+        });
+
+        for (int i = 0; i < sortedPlayers.Count; i++)
+        {
+            int rank = i + 1;
+            var player = sortedPlayers[i];
+            Color color = player.color;
+            string hexColor = ColorUtility.ToHtmlStringRGB(color); 
+            string playerNameColored = $"<color=#{hexColor}>{player.name}</color>";
+            int playerScore = playerPoints.ContainsKey(player.ID) ? playerPoints[player.ID] : 0;
+
+            endScoreText.text += $"{rank}. {playerNameColored}: {playerScore}\n";
+        }
+
+        gameEndPanel.SetActive(!gameEndPanel.activeSelf);
+    }
+
+
     
     private IEnumerator DelayThenNextRound()
     {
@@ -711,9 +784,32 @@ public class GameManagerCombined : NetworkBehaviour
                     ShowWinnerClientRpc(alivePlayers[0]);
                     
                     FreezePlayers();
+                    RequestScaleDownWinnerTextServerRpc();
+                    RequestWaitAfterRoundServerRPC();
+                    if(networkRounds.Value > 0)
+                    {
+                        if (networkRounds.Value <= 0)
+                        {
+                            // Game over, show end screen
+                            NewGameButton();
+                        }
+                        else
+                        {
+                            NextRoundButton();
+                        }
+                    }
                 }
             }
         }
+    }
+    [ServerRpc(RequireOwnership = false)]
+    void RequestWaitAfterRoundServerRPC()
+    {
+        StartCoroutine(waitForSeconds(1.5f));
+    }
+    IEnumerator waitForSeconds(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
     }
 
     
@@ -721,8 +817,31 @@ public class GameManagerCombined : NetworkBehaviour
     void ShowWinnerClientRpc(int winningPlayer)
     {
         winnerText.gameObject.SetActive(true);
+        winnerText.transform.localScale = new Vector3(2f, 2f, 2f);
         winnerText.text = "Player " + (winningPlayer + 1) + " won!";
+        winnerText.color = playerList.players[winningPlayer].color;
     }
+    [ServerRpc(RequireOwnership = false)]
+    void RequestScaleDownWinnerTextServerRpc()
+    {
+        StartCoroutine(ScaleDownWinnerText(winnerText.transform, 1.5f));
+    }
+    IEnumerator ScaleDownWinnerText(Transform textTransform, float duration)
+    {
+        Vector3 originalScale = new Vector3(2f, 2f, 2f);
+        Vector3 targetScale = new Vector3(.5f, .5f, .5f);
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            textTransform.localScale = Vector3.Lerp(originalScale, targetScale, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        textTransform.localScale = targetScale;
+    }
+
     
     public void UnfreezePlayers()
     {
@@ -762,12 +881,6 @@ public class GameManagerCombined : NetworkBehaviour
     void SetupNewRoundClientRpc()
     {
         winnerText.gameObject.SetActive(false);
-        
-        foreach (PlayerData playerData in playerList.players)
-        {
-            // Only create new tails here, positions are already set
-           // playerData.gObject.GetComponentInChildren<SnakeMovement>().CreateNewTailOnly();
-        }
     }
 
     [ServerRpc(RequireOwnership = false)]

@@ -76,7 +76,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   SnakeHead: {fileID: 0}
   addPoints: 1
-  pointSpacing: 0.1
+  pointSpacing: 0.05
   tailPrefab: {fileID: 2048921894963028788}
   shouldAddPoints:
     m_InternalValue: 1

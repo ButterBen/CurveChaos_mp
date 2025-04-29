@@ -521,7 +521,7 @@ public class SnakeMovement : NetworkBehaviour
         for (float t = 0; t < blinkDuration; t += blinkInterval *2f)
         {
             Color tempColor = spriteRenderer.color;
-            tempColor.a = 0.25f;
+            tempColor.a = 0.1f;
             spriteRenderer.color = tempColor;
             yield return new WaitForSeconds(blinkInterval);
             spriteRenderer.color = originalColor;
@@ -560,7 +560,7 @@ public class SnakeMovement : NetworkBehaviour
             foreach (var renderer in renderers)
             {
                 Color tempColor = renderer.color;
-                tempColor.a = 0.5f;
+                tempColor.a = 0.1f;
                 renderer.color = tempColor;
             }
             yield return new WaitForSeconds(blinkInterval);
@@ -581,41 +581,51 @@ public class SnakeMovement : NetworkBehaviour
     public void NinetyDegreeControlsPowerUp()
     {
         nintyDegreeControls = true;
-        Invoke("ResetPowerUp", 5f);
+        currentTail.GetComponent<Tail>().CreateGap(3);
+        nextGapAt = GenerateNextGapStartTime();
+        Invoke("ResetPowerUpNintyDegreeTurn", 5f);
     }
     public void DoubleSizePowerUp()
     {
-        currentTail.GetComponent<Tail>().CreateGap();
+        currentTail.GetComponent<Tail>().CreateGap(3);
         nextGapAt = GenerateNextGapStartTime();
-        StartCoroutine(waitForGapChangeSize(2f, 2f, 2f));
+        StartCoroutine(waitForGapChangeSize(2f, 2f, 2f,1));
         Invoke("ResetSizePowerUpDouble", 5f);
     }
     public void HalfSizePowerUp()
     {
         currentTail.GetComponent<Tail>().CreateGap();
         nextGapAt = GenerateNextGapStartTime();
-        StartCoroutine(waitForGapChangeSize(0.5f, 0.5f, 1f));
+        StartCoroutine(waitForGapChangeSize(0.5f, 0.5f, 1f,0));
         Invoke("ResetSizePowerUpHalf", 5f);
     }
     void ResetSizePowerUpDouble()
     {
-        currentTail.GetComponent<Tail>().CreateGap();
+        currentTail.GetComponent<Tail>().CreateGap(2);
         nextGapAt = GenerateNextGapStartTime();
-        StartCoroutine(waitForGapChangeSize(0.5f, .5f, 0.5f));
+        StartCoroutine(waitForGapChangeSize(0.5f, .5f, 0.5f,-1));
     }
     void ResetSizePowerUpHalf()
     {
-        currentTail.GetComponent<Tail>().CreateGap();
+        currentTail.GetComponent<Tail>().CreateGap(2);
         nextGapAt = GenerateNextGapStartTime();
-        StartCoroutine(waitForGapChangeSize(2f, 2f,1f));
+        StartCoroutine(waitForGapChangeSize(2f, 2f,1f,0));
     }
-    IEnumerator waitForGapChangeSize(float widthMultiplier, float scaleMultiplier, float pointSpacingMultiplier)
+    IEnumerator waitForGapChangeSize(float widthMultiplier, float scaleMultiplier, float pointSpacingMultiplier, int colliderPointsOffset)
     {
         yield return new WaitForSeconds(0.4f);
+       // currentTail.GetComponent<Tail>().colliderPointsOffset += colliderPointsOffset;
         currentTail.GetComponent<LineRenderer>().startWidth *= widthMultiplier;
         currentTail.GetComponent<Tail>().pointSpacing *= pointSpacingMultiplier;
         currentTail.GetComponent<EdgeCollider2D>().edgeRadius *= widthMultiplier;
+        
         this.transform.localScale *= scaleMultiplier;
+    }
+    void ResetPowerUpNintyDegreeTurn()
+    {
+        nintyDegreeControls = false;
+        currentTail.GetComponent<Tail>().CreateGap(3);
+        nextGapAt = GenerateNextGapStartTime();
     }
     void ResetPowerUp()
     {
