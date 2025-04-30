@@ -3,7 +3,7 @@
 This is a remake of the classic arcade game "Achtung die Kurve" or "[CurveFever](https://curvefever.pro/)"
 The game is developed with help of [Fusselmensch](https://github.com/fusselmensch) responsible for the input system.
 
-A full playthrough can be seen here: [Watch on YouTube](https://www.youtube.com/watch?v=_Z_k4NQLr1Y)  
+A full playthrough can be seen here: [Watch on YouTube](https://youtu.be/Ay6pghv41qc)  
 A realese of the full game can be found in this repo.
 
 ---
