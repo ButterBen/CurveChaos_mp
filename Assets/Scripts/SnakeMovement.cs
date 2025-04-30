@@ -181,6 +181,7 @@ public class SnakeMovement : NetworkBehaviour
         }
 
         CleanupAllTailsClientRpc(playerId);
+        ResetPowerUpNewRound();
         
         StartCoroutine(DelayedSpawnAfterCleanup());
     }
@@ -555,19 +556,19 @@ IEnumerator WallBlinker(List<GameObject> walls, Color playerColor, bool allPlaye
     List<Color> originalColors = new List<Color>();
     foreach (var renderer in renderers)
     {
-        originalColors.Add(renderer.color);
+        originalColors.Add(Color.white);
     }
     
     // Determine the blink color based on the allPlayers parameter
     List<Color> blinkColors = new List<Color>();
     if (allPlayers)
     {
+        Color blinkColor = Color.white;
+        blinkColor.a = 0.2f;
         // Use original colors with reduced opacity
-        foreach (Color origColor in originalColors)
+        for (int i = 0; i < renderers.Count; i++)
         {
-            Color transColor = origColor;
-            transColor.a = 0.1f;
-            blinkColors.Add(transColor);
+            blinkColors.Add(blinkColor);
         }
     }
     else
@@ -604,6 +605,9 @@ IEnumerator WallBlinker(List<GameObject> walls, Color playerColor, bool allPlaye
     for (int i = 0; i < renderers.Count; i++)
     {
         renderers[i].color = originalColors[i];
+        Color tempColor = renderers[i].color;
+        tempColor.a = 1f; // Reset alpha to 1
+        renderers[i].color = tempColor;
     }
 }
     
@@ -663,6 +667,20 @@ IEnumerator WallBlinker(List<GameObject> walls, Color playerColor, bool allPlaye
     }
     void ResetPowerUp()
     {
+        nintyDegreeControls = false;
+        invertedControls = false;
+        speed = 1f;
+        rotationSpeed = 200f;
+        playerInvincible = false;
+        wallInvincible = false;
+    }
+    void ResetPowerUpNewRound()
+    {
+        CancelInvoke("ResetPowerUp");
+        CancelInvoke("ResetPowerUpNintyDegreeTurn");
+        CancelInvoke("ResetSizePowerUpDouble");
+        CancelInvoke("ResetSizePowerUpHalf");
+        transform.localScale = new Vector3(0.52f, 0.52f, 0.52f);
         nintyDegreeControls = false;
         invertedControls = false;
         speed = 1f;

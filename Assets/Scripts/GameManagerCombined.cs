@@ -522,7 +522,7 @@ public class GameManagerCombined : NetworkBehaviour
             Debug.Log("Only the host can return to menu");
             return;
         }
-        
+        ToggleGameEndPanelClientRPC();
         // Call RPC to return to menu on all clients
         BackToMenuClientRpc();
         DeleteAllPlayersFromMenuServerRpc();
