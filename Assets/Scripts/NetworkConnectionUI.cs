@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
+using Unity.VisualScripting;
 #if NEW_INPUT_SYSTEM_INSTALLED
 using UnityEngine.InputSystem.UI;
 #endif
@@ -21,6 +22,7 @@ namespace Unity.Multiplayer.Center.NetcodeForGameObjectsExample
         [SerializeField] private TextMeshProUGUI m_ConnectionStatusText;
         [SerializeField] private GameObject StartScreen;
         [SerializeField] private GameObject roundsOjbect;
+        [SerializeField] private GameObject AddPlayerButton;
 
         // Default values
         private string m_DefaultIp = "127.0.0.1";
@@ -39,6 +41,7 @@ namespace Unity.Multiplayer.Center.NetcodeForGameObjectsExample
 #endif
                 var eventSystem = new GameObject("EventSystem", typeof(EventSystem), inputType);
                 eventSystem.transform.SetParent(transform);
+                EventSystem.current.SetSelectedGameObject(m_StartHostButton.gameObject);
             }
         }
 
@@ -117,6 +120,7 @@ namespace Unity.Multiplayer.Center.NetcodeForGameObjectsExample
                 if (m_StartHostButton != null) m_StartHostButton.interactable = false;
                 StartScreen.SetActive(false);
                 roundsOjbect.SetActive(true);
+                EventSystem.current.SetSelectedGameObject(AddPlayerButton.gameObject);
             }
             else
             {
@@ -133,6 +137,7 @@ namespace Unity.Multiplayer.Center.NetcodeForGameObjectsExample
                 UpdateConnectionStatus("Host started. Waiting for connections...");
                 StartScreen.SetActive(false);
                 roundsOjbect.SetActive(true);
+                EventSystem.current.SetSelectedGameObject(AddPlayerButton.gameObject);
             }
             else
             {

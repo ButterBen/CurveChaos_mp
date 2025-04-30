@@ -55,7 +55,7 @@ public class PowerUpManager : MonoBehaviour
                     snakeMovement.InvincibilityPowerUp();
                     break;
                 case PowerUpType.InvincibilityWall:
-                    snakeMovement.WallInvincibilityPowerUp(walls);
+                    snakeMovement.WallInvincibilityPowerUp(walls, false);
                     break;
                 case PowerUpType.InvertControlsOthers:
                     InvertControllsOtherPlayers(other);
@@ -160,7 +160,7 @@ public class PowerUpManager : MonoBehaviour
             foreach (PlayerData player in playerList.players)
             {
                 SnakeMovement otherSnakeMovement = player.gObject.GetComponentInChildren<SnakeMovement>();
-                otherSnakeMovement.WallInvincibilityPowerUp(walls);
+                otherSnakeMovement.WallInvincibilityPowerUp(walls, true);
             }
             Destroy(gameObject); 
         }

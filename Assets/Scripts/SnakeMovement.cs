@@ -528,50 +528,84 @@ public class SnakeMovement : NetworkBehaviour
             yield return new WaitForSeconds(blinkInterval);
         }
     }
-    public void WallInvincibilityPowerUp(List<GameObject> walls)
+public void WallInvincibilityPowerUp(List<GameObject> walls, bool allPlayers)
+{
+    // Get the player's color from the player list
+    Color playerColor = playerList.playerColors[playerId];
+    
+    StartCoroutine(WallBlinker(walls, playerColor, allPlayers));
+    wallInvincible = true;
+    Invoke("ResetPowerUp", 5f); 
+}
+
+IEnumerator WallBlinker(List<GameObject> walls, Color playerColor, bool allPlayers = false)
+{
+    float blinkDuration = 4.9f;
+    float blinkInterval = 0.245f;
+    List<SpriteRenderer> renderers = new List<SpriteRenderer>();
+
+    foreach (GameObject wall in walls)
     {
-        StartCoroutine(WallBlinker(walls));
-        wallInvincible = true;
-        Invoke("ResetPowerUp", 5f); 
+        if (wall != null)
+        {
+            renderers.Add(wall.GetComponent<SpriteRenderer>());
+        }
     }
 
-    IEnumerator WallBlinker(List<GameObject> walls)
+    List<Color> originalColors = new List<Color>();
+    foreach (var renderer in renderers)
     {
-        float blinkDuration = 4.9f;
-        float blinkInterval = 0.245f;
-        List<SpriteRenderer> renderers = new List<SpriteRenderer>();
-
-        foreach (GameObject wall in walls)
+        originalColors.Add(renderer.color);
+    }
+    
+    // Determine the blink color based on the allPlayers parameter
+    List<Color> blinkColors = new List<Color>();
+    if (allPlayers)
+    {
+        // Use original colors with reduced opacity
+        foreach (Color origColor in originalColors)
         {
-            if (wall != null)
-            {
-                renderers.Add(wall.GetComponent<SpriteRenderer>());
-            }
-        }
-
-        List<Color> originalColors = new List<Color>();
-        foreach (var renderer in renderers)
-        {
-            originalColors.Add(renderer.color);
-        }
-
-        for (float t = 0; t < blinkDuration; t += blinkInterval * 2f)
-        {
-            foreach (var renderer in renderers)
-            {
-                Color tempColor = renderer.color;
-                tempColor.a = 0.1f;
-                renderer.color = tempColor;
-            }
-            yield return new WaitForSeconds(blinkInterval);
-
-            for (int i = 0; i < renderers.Count; i++)
-            {
-                renderers[i].color = originalColors[i];
-            }
-            yield return new WaitForSeconds(blinkInterval);
+            Color transColor = origColor;
+            transColor.a = 0.1f;
+            blinkColors.Add(transColor);
         }
     }
+    else
+    {
+        // Use the player's color with reduced opacity
+        Color blinkColor = playerColor;
+        blinkColor.a = 0.4f;
+        
+        // Fill the list with the player color for all renderers
+        for (int i = 0; i < renderers.Count; i++)
+        {
+            blinkColors.Add(blinkColor);
+        }
+    }
+    
+    for (float t = 0; t < blinkDuration; t += blinkInterval * 2f)
+    {
+        // Change walls to blink color
+        for (int i = 0; i < renderers.Count; i++)
+        {
+            renderers[i].color = blinkColors[i];
+        }
+        yield return new WaitForSeconds(blinkInterval);
+
+        // Change back to original colors
+        for (int i = 0; i < renderers.Count; i++)
+        {
+            renderers[i].color = originalColors[i];
+        }
+        yield return new WaitForSeconds(blinkInterval);
+    }
+    
+    // Ensure walls return to original colors when effect ends
+    for (int i = 0; i < renderers.Count; i++)
+    {
+        renderers[i].color = originalColors[i];
+    }
+}
     
     public void InvertControlsPowerUp()
     {

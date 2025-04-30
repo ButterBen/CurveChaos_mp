@@ -6,6 +6,7 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 
 public class GameManagerCombined : NetworkBehaviour
 {
@@ -30,6 +31,7 @@ public class GameManagerCombined : NetworkBehaviour
     public GameObject roundsInputField;
     public GameObject pauseText;
     public GameObject gameEndPanel;
+    public GameObject newGameButton;
     
     [Header("PowerUps")]
     public GameObject doubleSpeedPrefab;
@@ -404,6 +406,8 @@ public class GameManagerCombined : NetworkBehaviour
     [ClientRpc]
     public void ToggleGameEndPanelClientRPC()
     {
+                                    EventSystem.current.SetSelectedGameObject(newGameButton);
+                            Debug.Log("CURRENT SELECTED"+EventSystem.current.currentSelectedGameObject.name);
         winnerText.gameObject.SetActive(false);
         endScoreText.text = "";
 
